@@ -19,6 +19,7 @@ class SequentialHalvingOptionalElimination:
         self.B = B
         self.reuse = reuse
         self.seed = seed
+        self.epsilon = 0.01
 
         self.cur_best_arm = -1
         self.n_pulls = np.zeros(K, dtype=int)
@@ -41,7 +42,7 @@ class SequentialHalvingOptionalElimination:
 
         # - for bayesian updates
         self.prior_means = 0.5*np.ones(K)
-        self.prior_vars = 0.5 * np.ones(K)
+        self.prior_vars = 0.5*np.ones(K)
         self.true_vars = np.ones(K)
 
         self.pos_means = 0.5 * np.ones(K)
@@ -120,7 +121,7 @@ class SequentialHalvingOptionalElimination:
                     while (s < t_B):
                         arm_to_pull = SH_algo_full.next_arm()
                         temp_sigma = self.true_vars[arm_to_pull]
-                        reward = sample_rewards(self.pos_means[arm_to_pull], temp_sigma**2)
+                        reward = sample_rewards(self.pos_means[arm_to_pull], temp_sigma)
                         SH_algo_full.update(arm_to_pull, reward)
                         s = s + 1
                     emp_best = SH_algo_full.get_best_empirical_mean()
@@ -131,7 +132,7 @@ class SequentialHalvingOptionalElimination:
                     while (s < t_B):
                         arm_to_pull = SH_algo_half.next_arm()
                         temp_sigma =  self.true_vars[my_chosen[arm_to_pull]]
-                        reward = sample_rewards(self.pos_means[my_chosen[arm_to_pull]],temp_sigma**2)
+                        reward = sample_rewards(self.pos_means[my_chosen[arm_to_pull]],temp_sigma)
                         SH_algo_half.update(arm_to_pull, reward)
                         s = s + 1
                     emp_best = SH_algo_half.get_best_empirical_mean()
@@ -140,8 +141,9 @@ class SequentialHalvingOptionalElimination:
 
 
                 # Optional Elimination
-
-                if (VoE_half > VoE_full):
+                avg_VoE_half = VoE_half/self.nMC
+                avg_VoE_full = VoE_full/self.nMC
+                if (avg_VoE_half > avg_VoE_full + self.epsilon):
                     elim_flag = True
                 else:
                     elim_flag = False
