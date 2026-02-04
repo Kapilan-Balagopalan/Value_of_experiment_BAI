@@ -23,7 +23,7 @@ def sample_arm_means():
     #np.random.seed(42)
     # Is this necessary, or can i just manually set K arms.
     #true_means = np.random.normal(TRUE_MU, TRUE_SIGMA**2, size=K)
-    arm_means = [1,0.9,0.8,0.8,0.8,0.8,0.8,0.8]
+    arm_means = [1,0.99,0.98,0.98,0.97,0.97,0.97,0.97]
     true_means = np.array(arm_means)
     return true_means
 
@@ -129,12 +129,20 @@ lower_SHOE = Y_SHOE - delta_SHOE
 upper_SHOE = Y_SHOE + delta_SHOE
 
 plt.plot(n_MC_set, Y_SH, label="SH", color="blue")
-plt.plot(n_MC_set, Y1_SH, label="SH_BAI", color="blue", linestyle='dotted')
+
 plt.fill_between(n_MC_set, lower_SH, upper_SH, color="blue", alpha=0.2)
 plt.plot(n_MC_set, Y_SHOE, label="SHOE", color="red")
-plt.plot(n_MC_set, Y1_SHOE, label="SHOE_BAI", color="red", linestyle='dotted')
+
 plt.fill_between(n_MC_set, lower_SHOE, upper_SHOE, color="red", alpha=0.2)
 plt.xlabel("Number of MC trials")
 plt.ylabel("Average value of experiment")
 plt.legend()
 plt.show()
+
+plt.plot(n_MC_set, Y1_SH, label="SH_BAI", color="blue", linestyle='dotted')
+plt.plot(n_MC_set, Y1_SHOE, label="SHOE_BAI", color="red", linestyle='dotted')
+plt.xlabel("Number of MC trials")
+plt.ylabel("Best arm identification success rate")
+plt.legend()
+plt.show()
+plt.legend()
