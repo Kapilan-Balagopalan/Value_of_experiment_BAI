@@ -23,7 +23,7 @@ def sample_arm_means():
     #np.random.seed(42)
     # Is this necessary, or can i just manually set K arms.
     #true_means = np.random.normal(TRUE_MU, TRUE_SIGMA**2, size=K)
-    arm_means = [1,0.9,0.8,0.8,0.7,0.7,0.7,0.7]
+    arm_means = [1,0.9,0.8,0.8,0.8,0.8,0.8,0.8]
     true_means = np.array(arm_means)
     return true_means
 
@@ -50,45 +50,66 @@ def trial(SHOE_algo,true_means, true_vars, HORIZON):
 
     emp_best = SHOE_algo.get_best_arm()
     if true_means[emp_best] > 0 :
-        return true_means[emp_best]
+        return true_means[emp_best],emp_best
     else:
-        return 0
+        return 0,-1
 
 
 
 
 #nMC = 10
+random.seed(10)
 
 true_means = sample_arm_means()
 true_vars = set_variance()
 
-nTrials = 3
+nTrials = 50
 
-n_MC_set = [3]
+n_MC_set = [1,10,20,50,100]
 
 Y_SHOE = []
 Y_SH = []
 
+Y1_SHOE = []
+Y1_SH = []
+
 for nMC in n_MC_set:
     VoE_SHOE = 0
     VoE_SH = 0
+    BAI_SHOE = 0
+    BAI_SH = 0
     print("nMC", nMC)
     true_means = sample_arm_means()
     for i in range(nTrials):
         SH_algo = SequentialHalving(K, HORIZON)
         SHOE_algo = SequentialHalvingOptionalElimination(K, HORIZON, nMC)
+        voe_sh, best_arm_sh = trial(SH_algo, true_means, true_vars, HORIZON)
+        VoE_SH = VoE_SH + voe_sh
+        if(best_arm_sh == 0):
+            BAI_SH = BAI_SH + 1
 
-        VoE_SH = VoE_SH + trial(SH_algo, true_means, true_vars, HORIZON)
-        VoE_SHOE = VoE_SHOE + trial(SHOE_algo, true_means, true_vars, HORIZON)
+        voe_shoe, best_arm_shoe = trial(SHOE_algo, true_means, true_vars, HORIZON)
+        VoE_SHOE = VoE_SHOE + voe_shoe
+        if (best_arm_shoe == 0):
+            BAI_SHOE = BAI_SHOE + 1
 
     avg_VoE_SHOE= VoE_SHOE/nTrials
     avg_VoE_SH= VoE_SH/nTrials
 
+    avg_BAI_SHOE= BAI_SHOE/nTrials
+    avg_BAI_SH= BAI_SH/nTrials
+
     print("VoE_SHOE", avg_VoE_SHOE)
     print("VoE_SH", avg_VoE_SH)
 
+    print("BAI_SHOE", avg_BAI_SHOE)
+    print("BAI_SH", avg_BAI_SH)
+
     Y_SH.append(avg_VoE_SH)
     Y_SHOE.append(avg_VoE_SHOE)
+
+    Y1_SH.append(avg_BAI_SH)
+    Y1_SHOE.append(avg_BAI_SHOE)
 
 
 alpha = 0.95
@@ -108,8 +129,10 @@ lower_SHOE = Y_SHOE - delta_SHOE
 upper_SHOE = Y_SHOE + delta_SHOE
 
 plt.plot(n_MC_set, Y_SH, label="SH", color="blue")
+plt.plot(n_MC_set, Y1_SH, label="SH_BAI", color="blue", linestyle='dotted')
 plt.fill_between(n_MC_set, lower_SH, upper_SH, color="blue", alpha=0.2)
 plt.plot(n_MC_set, Y_SHOE, label="SHOE", color="red")
+plt.plot(n_MC_set, Y1_SHOE, label="SHOE_BAI", color="red", linestyle='dotted')
 plt.fill_between(n_MC_set, lower_SHOE, upper_SHOE, color="red", alpha=0.2)
 plt.xlabel("Number of MC trials")
 plt.ylabel("Average value of experiment")
